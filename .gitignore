@@ -39,7 +39,7 @@ ENV/
 Thumbs.db
 
 # Large model files
-*.pt
+
 *.onnx
 *.pb
 
