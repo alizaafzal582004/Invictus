@@ -302,62 +302,39 @@ if mode == "📁 Upload Video":
             with open(out_path, "rb") as f:
                 st.download_button("⬇️ Download Battle Recording", f, file_name="pushup_result.mp4")
 
-# ================= MODE 2: LIVE WEBCAM =================
+# ================= MODE 2: LIVE WEBCAM (WebRTC) =================
 elif mode == "🎥 Live Hunter Mode":
-    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Webcam local machine se access hoga. Camera permission allow karo agar poocha jaye.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Camera permission allow karo jab browser poochay. Video ke upar real-time reps, angle aur status dekhein.</div>', unsafe_allow_html=True)
+    
+    from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+    import av
 
-    col1, col2 = st.columns([3, 1])
-    with col2:
-        start_btn = st.button("▶️ START TRAINING")
-        stop_btn = st.button("⏹️ END SESSION")
-        count_display = st.empty()
-        rank_display = st.empty()
-        debug_display = st.empty()
+    class PushupProcessor(VideoProcessorBase):
+        def __init__(self):
+            self.counter = 0
+            self.stage = None
+            self.last_count_time = 0
+            self.up_frames = 0
+            self.down_frames = 0
 
-    frame_window = col1.empty()
-
-    if "running" not in st.session_state:
-        st.session_state.running = False
-
-    if start_btn:
-        st.session_state.running = True
-    if stop_btn:
-        st.session_state.running = False
-
-    if st.session_state.running:
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-        counter, stage = 0, None
-        last_count_time = 0
-        up_frames, down_frames = 0, 0
-
-        while st.session_state.running:
-            ret, frame = cap.read()
-            if not ret:
-                st.error("Webcam se frame nahi mil raha.")
-                break
-
-            annotated_frame, counter, stage, angle, last_count_time, up_frames, down_frames = process_frame(
-                frame, counter, stage, last_count_time, up_frames, down_frames
+        def recv(self, frame):
+            img = frame.to_ndarray(format="bgr24")
+            
+            # Processing frame using original logic
+            annotated_frame, self.counter, self.stage, angle, self.last_count_time, self.up_frames, self.down_frames = process_frame(
+                img, self.counter, self.stage, self.last_count_time, self.up_frames, self.down_frames
             )
-            frame_window.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB))
+            
+            return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
-            rank, color = get_rank(counter)
-            count_display.markdown(
-                f'<div class="system-box"><div class="system-title">💪 REPS</div>'
-                f'<div class="stat-value">{counter}</div></div>', unsafe_allow_html=True)
-            rank_display.markdown(
-                f'<div class="system-box"><div class="system-title">🎖️ HUNTER RANK</div>'
-                f'<span class="rank-badge" style="background:{color};">{rank}</span></div>',
-                unsafe_allow_html=True)
-            debug_display.markdown(
-                f'<div class="system-box"><div class="system-title">📊 LIVE DEBUG</div>'
-                f'<b>Angle:</b> {int(angle) if angle else "N/A"} &nbsp; <b>Stage:</b> {stage}</div>',
-                unsafe_allow_html=True)
+    ctx = webrtc_streamer(
+        key="pushup-live",
+        video_processor_factory=PushupProcessor,
+        media_stream_constraints={"video": True, "audio": False},
+    )
 
-            if not st.session_state.running:
-                break
-
-        cap.release()
+    if ctx.video_processor:
+        st.markdown(
+            f'<div class="system-box"><div class="system-title">💪 REPS (live updating on video)</div></div>',
+            unsafe_allow_html=True
+        )
