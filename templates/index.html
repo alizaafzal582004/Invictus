@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Push-Up Counter | Hunter System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        @keyframes glow-pulse {
+            0%, 100% { filter: drop-shadow(0 0 10px #7B2FFF); }
+            50% { filter: drop-shadow(0 0 25px #00E5FF); }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at top, #0a0e27 0%, #05070f 60%, #000000 100%);
+            font-family: 'Orbitron', sans-serif;
+            color: #C5C8E8;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-title {
+            font-size: 48px;
+            font-weight: 900;
+            text-align: center;
+            background: linear-gradient(90deg, #7B2FFF, #4361FF, #00E5FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(123, 47, 255, 0.6);
+            letter-spacing: 3px;
+            margin-bottom: 0px;
+            animation: glow-pulse 2.5s ease-in-out infinite;
+        }
+
+        .sub-title {
+            text-align: center;
+            color: #8A8FB9;
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .video-container {
+            background: rgba(15, 20, 45, 0.6);
+            border: 1px solid #4361FF;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(67, 97, 255, 0.4);
+        }
+
+        .stats-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .system-box {
+            background: rgba(15, 20, 45, 0.6);
+            border: 1px solid #4361FF;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(67, 97, 255, 0.4), inset 0 0 20px rgba(67, 97, 255, 0.1);
+        }
+
+        .system-title {
+            color: #00E5FF;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+            padding-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 0 0 15px #4361FF;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 20px;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #7B2FFF, #00E5FF);
+            color: #05070f;
+            box-shadow: 0 0 20px rgba(123, 47, 255, 0.7);
+        }
+
+        #video {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4361FF, #7B2FFF);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(123, 47, 255, 0.5);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        button:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.7);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00FF00;
+            color: #00FF00;
+        }
+
+        .status.error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #FF0000;
+            color: #FF0000;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-title {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-title">⚔️ HUNTER PUSH-UP SYSTEM ⚔️</div>
+    <div class="sub-title">// Arise. Train. Level Up. //</div>
+
+    <div class="container">
+        <div class="video-container">
+            <div class="system-title">🎥 LIVE HUNTER TRACKING</div>
+            <video id="video" autoplay muted></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            
+            <div class="controls">
+                <button id="startBtn">▶️ START TRAINING</button>
+                <button id="stopBtn" disabled>⏹️ END SESSION</button>
+                <button id="resetBtn">🔄 RESET COUNT</button>
+            </div>
+            
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="system-box">
+                <div class="system-title">💪 REPS</div>
+                <div class="stat-value" id="repCount">0</div>
+            </div>
+
+            <div class="system-box">
+                <div class="system-title">🎖️ HUNTER RANK</div>
+                <span class="rank-badge" id="rankBadge" style="background: #8A8FB9;">E</span>
+            </div>
+
+            <div class="system-box">
+                <div class="system-title">📊 LIVE DEBUG</div>
+                <div>
+                    <strong>Angle:</strong> <span id="angleValue">N/A</span><br>
+                    <strong>Stage:</strong> <span id="stageValue">READY</span>
+                </div>
+            </div>
+
+            <div class="system-box">
+                <div class="system-title">💡 TIPS</div>
+                <div style="font-size: 12px; line-height: 1.4;">
+                    • Position yourself sideways to camera<br>
+                    • Keep full arm visible<br>
+                    • Maintain good form<br>
+                    • Good lighting helps detection
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isTracking = false;
+        let stream = null;
+        let counter = 0;
+        let lastStage = null;
+        let processingInterval = null;
+
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const status = document.getElementById('status');
+
+        function showStatus(message, type = 'success') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        function getRank(count) {
+            if (count >= 50) return { rank: 'S', color: '#FFD700' };
+            if (count >= 30) return { rank: 'A', color: '#FF3B3B' };
+            if (count >= 20) return { rank: 'B', color: '#7B2FFF' };
+            if (count >= 10) return { rank: 'C', color: '#4361FF' };
+            if (count >= 5) return { rank: 'D', color: '#00E5FF' };
+            return { rank: 'E', color: '#8A8FB9' };
+        }
+
+        function updateUI(data) {
+            if (data.success) {
+                document.getElementById('angleValue').textContent = data.angle || 'N/A';
+                document.getElementById('stageValue').textContent = data.stage?.toUpperCase() || 'READY';
+                
+                // Count logic
+                if (data.stage === 'down' && lastStage === 'up') {
+                    counter++;
+                    document.getElementById('repCount').textContent = counter;
+                    
+                    const { rank, color } = getRank(counter);
+                    const rankBadge = document.getElementById('rankBadge');
+                    rankBadge.textContent = rank;
+                    rankBadge.style.background = color;
+                    
+                    showStatus(`⚡ LEVEL UP! Rep #${counter} counted!`);
+                }
+                
+                lastStage = data.stage;
+            }
+        }
+
+        function captureAndProcess() {
+            if (!isTracking) return;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            fetch('/api/process_frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => updateUI(data))
+            .catch(error => {
+                console.error('Processing error:', error);
+                showStatus('Processing error occurred', 'error');
+            });
+        }
+
+        async function startTracking() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                video.srcObject = stream;
+                
+                isTracking = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                // Process frames every 200ms
+                processingInterval = setInterval(captureAndProcess, 200);
+                
+                showStatus('Camera started successfully!');
+            } catch (error) {
+                console.error('Camera access error:', error);
+                showStatus('Camera access denied or not available', 'error');
+            }
+        }
+
+        function stopTracking() {
+            isTracking = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            if (processingInterval) {
+                clearInterval(processingInterval);
+                processingInterval = null;
+            }
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            video.srcObject = null;
+            showStatus('Training session ended');
+        }
+
+        function resetCount() {
+            counter = 0;
+            lastStage = null;
+            document.getElementById('repCount').textContent = '0';
+            document.getElementById('angleValue').textContent = 'N/A';
+            document.getElementById('stageValue').textContent = 'READY';
+            
+            const rankBadge = document.getElementById('rankBadge');
+            rankBadge.textContent = 'E';
+            rankBadge.style.background = '#8A8FB9';
+            
+            showStatus('Counter reset!');
+        }
+
+        startBtn.addEventListener('click', startTracking);
+        stopBtn.addEventListener('click', stopTracking);
+        resetBtn.addEventListener('click', resetCount);
+    </script>
+</body>
+</html>
