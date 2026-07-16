@@ -331,6 +331,9 @@ elif mode == "🎥 Live Hunter Mode":
         key="pushup-live",
         video_processor_factory=PushupProcessor,
         media_stream_constraints={"video": True, "audio": False},
+        rtc_configuration={
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"]}]
+        },
     )
 
     if ctx.video_processor:
