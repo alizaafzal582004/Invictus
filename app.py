@@ -302,14 +302,17 @@ if mode == "📁 Upload Video":
             with open(out_path, "rb") as f:
                 st.download_button("⬇️ Download Battle Recording", f, file_name="pushup_result.mp4")
 
-# ================= MODE 2: LIVE WEBCAM (WebRTC) =================
+# ================= MODE 2: LIVE WEBCAM (WebRTC Real-Time) =================
 elif mode == "🎥 Live Hunter Mode":
-    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Camera permission allow karo jab browser poochay. Video ke upar real-time reps, angle aur status dekhein.</div>', unsafe_allow_html=True)
-    
+    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Webcam local machine se access hoga. Camera permission allow karo agar poochay.</div>', unsafe_allow_html=True)
+
     from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
     import av
 
+    # Shared class attributes to update UI reactively from WebRTC thread
     class PushupProcessor(VideoProcessorBase):
+        _shared_state = {"counter": 0, "stage": None, "angle": None}
+
         def __init__(self):
             self.counter = 0
             self.stage = None
@@ -320,24 +323,61 @@ elif mode == "🎥 Live Hunter Mode":
         def recv(self, frame):
             img = frame.to_ndarray(format="bgr24")
             
-            # Processing frame using original logic
+            # Run same process logic on live frame
             annotated_frame, self.counter, self.stage, angle, self.last_count_time, self.up_frames, self.down_frames = process_frame(
                 img, self.counter, self.stage, self.last_count_time, self.up_frames, self.down_frames
             )
             
+            # Sync variables safely with main Thread
+            PushupProcessor._shared_state["counter"] = self.counter
+            PushupProcessor._shared_state["stage"] = self.stage
+            PushupProcessor._shared_state["angle"] = angle
+            
             return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
-    ctx = webrtc_streamer(
-        key="pushup-live",
-        video_processor_factory=PushupProcessor,
-        media_stream_constraints={"video": True, "audio": False},
-        rtc_configuration={
-            "iceServers": [{"urls": ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"]}]
-        },
-    )
+    # Original layout structure with two columns
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        # Keep original control placeholders & cards structure exactly the same
+        count_display = st.empty()
+        rank_display = st.empty()
+        debug_display = st.empty()
 
-    if ctx.video_processor:
-        st.markdown(
-            f'<div class="system-box"><div class="system-title">💪 REPS (live updating on video)</div></div>',
-            unsafe_allow_html=True
+    with col1:
+        # WebRTC component taking exact spot of webcam window
+        ctx = webrtc_streamer(
+            key="pushup-live",
+            video_processor_factory=PushupProcessor,
+            media_stream_constraints={"video": True, "audio": False},
+            rtc_configuration={
+                "iceServers": [{"urls": ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"]}]
+            },
         )
+
+    # Infinite UI updating loop that updates your original Cards with ZERO latency
+    if ctx.video_processor:
+        while ctx.state.playing:
+            # Safely fetch thread values
+            counter = PushupProcessor._shared_state["counter"]
+            stage = PushupProcessor._shared_state["stage"]
+            angle = PushupProcessor._shared_state["angle"]
+            
+            rank, color = get_rank(counter)
+            
+            # Exact HTML output structure of original cards
+            count_display.markdown(
+                f'<div class="system-box"><div class="system-title">💪 REPS</div>'
+                f'<div class="stat-value">{counter}</div></div>', unsafe_allow_html=True)
+            
+            rank_display.markdown(
+                f'<div class="system-box"><div class="system-title">🎖️ HUNTER RANK</div>'
+                f'<span class="rank-badge" style="background:{color};">{rank}</span></div>',
+                unsafe_allow_html=True)
+            
+            debug_display.markdown(
+                f'<div class="system-box"><div class="system-title">📊 LIVE DEBUG</div>'
+                f'<b>Angle:</b> {int(angle) if angle else "N/A"} &nbsp; <b>Stage:</b> {stage}</div>',
+                unsafe_allow_html=True)
+            
+            # Minor sleep to avoid CPU thread choking while keeping it responsive
+            time.sleep(0.08)
