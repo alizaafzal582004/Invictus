@@ -12,7 +12,7 @@ st.set_page_config(page_title="AI Push-Up Counter | Hunter System", page_icon="�
 # ---------------- SOLO LEVELING INSPIRED THEME ----------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght=400;700;900&display=swap');
 
     .stApp {
         background: radial-gradient(circle at top, #0a0e27 0%, #05070f 60%, #000000 100%);
@@ -116,6 +116,14 @@ st.markdown("""
         border: 1px solid #4361FF !important;
         border-radius: 10px !important;
     }
+
+    /* Force hide standard video controller strips if browser falls back */
+    video::-webkit-media-controls {
+        display:none !important;
+    }
+    video::-webkit-media-controls-enclosure {
+        display:none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -163,11 +171,11 @@ def get_rank(count):
     else:
         return "E", "#8A8FB9"
 
-# ---------------- FRAME PROCESSING (elbow-angle based, confirmed & debounced) ----------------
-UP_THRESHOLD = 145      # arm angle above this = extended (up)
-DOWN_THRESHOLD = 105     # arm angle below this = bent (down)
-CONFIRM_FRAMES = 2        # consecutive frames needed to confirm a state (filters jitter)
-COOLDOWN = 0.3             # seconds, avoid double-counting same rep
+# ---------------- FRAME PROCESSING ----------------
+UP_THRESHOLD = 145      
+DOWN_THRESHOLD = 105     
+CONFIRM_FRAMES = 2        
+COOLDOWN = 0.3             
 
 def process_frame(frame, counter, stage, last_count_time, up_frames, down_frames):
     results = model(frame, verbose=False)
@@ -201,7 +209,7 @@ def process_frame(frame, counter, stage, last_count_time, up_frames, down_frames
                         last_count_time = current_time
                     stage = "up"
             else:
-                pass  # mid-range: don't reset, wait for a clear state
+                pass
 
             cv2.putText(annotated_frame, f'ANGLE: {int(angle)}', (20, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 255), 3)
@@ -302,14 +310,13 @@ if mode == "📁 Upload Video":
             with open(out_path, "rb") as f:
                 st.download_button("⬇️ Download Battle Recording", f, file_name="pushup_result.mp4")
 
-# ================= MODE 2: LIVE WEBCAM (WebRTC Real-Time) =================
+# ================= MODE 2: LIVE WEBCAM (STRICT STREAM FIX) =================
 elif mode == "🎥 Live Hunter Mode":
-    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Webcam local machine se access hoga. Camera permission allow karo agar poochay.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Camera direct display hoga. Browser permission allow karein.</div>', unsafe_allow_html=True)
 
     from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
     import av
 
-    # Shared class attributes to update UI reactively from WebRTC thread
     class PushupProcessor(VideoProcessorBase):
         _shared_state = {"counter": 0, "stage": None, "angle": None}
 
@@ -322,49 +329,45 @@ elif mode == "🎥 Live Hunter Mode":
 
         def recv(self, frame):
             img = frame.to_ndarray(format="bgr24")
-            
-            # Run same process logic on live frame
             annotated_frame, self.counter, self.stage, angle, self.last_count_time, self.up_frames, self.down_frames = process_frame(
                 img, self.counter, self.stage, self.last_count_time, self.up_frames, self.down_frames
             )
-            
-            # Sync variables safely with main Thread
             PushupProcessor._shared_state["counter"] = self.counter
             PushupProcessor._shared_state["stage"] = self.stage
             PushupProcessor._shared_state["angle"] = angle
-            
             return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
-    # Original layout structure with two columns
     col1, col2 = st.columns([3, 1])
     with col2:
-        # Keep original control placeholders & cards structure exactly the same
         count_display = st.empty()
         rank_display = st.empty()
         debug_display = st.empty()
 
     with col1:
-        # WebRTC component taking exact spot of webcam window
         ctx = webrtc_streamer(
             key="pushup-live",
             video_processor_factory=PushupProcessor,
-            media_stream_constraints={"video": True, "audio": False},
+            # Strict constraints prevent video element fallback
+            media_stream_constraints={
+                "video": {
+                    "width": {"ideal": 640},
+                    "height": {"ideal": 480},
+                    "frameRate": {"ideal": 30}
+                },
+                "audio": False
+            },
             rtc_configuration={
                 "iceServers": [{"urls": ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"]}]
             },
         )
 
-    # Infinite UI updating loop that updates your original Cards with ZERO latency
     if ctx.video_processor:
         while ctx.state.playing:
-            # Safely fetch thread values
             counter = PushupProcessor._shared_state["counter"]
             stage = PushupProcessor._shared_state["stage"]
             angle = PushupProcessor._shared_state["angle"]
-            
             rank, color = get_rank(counter)
             
-            # Exact HTML output structure of original cards
             count_display.markdown(
                 f'<div class="system-box"><div class="system-title">💪 REPS</div>'
                 f'<div class="stat-value">{counter}</div></div>', unsafe_allow_html=True)
@@ -379,5 +382,4 @@ elif mode == "🎥 Live Hunter Mode":
                 f'<b>Angle:</b> {int(angle) if angle else "N/A"} &nbsp; <b>Stage:</b> {stage}</div>',
                 unsafe_allow_html=True)
             
-            # Minor sleep to avoid CPU thread choking while keeping it responsive
             time.sleep(0.08)
