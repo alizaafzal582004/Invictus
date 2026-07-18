@@ -196,18 +196,14 @@ def get_rank(count):
     else:
         return "E", "#8A8FB9"
 
-# ---------------- FRAME PROCESSING (elbow-angle based, confirmed, debounced, resized for speed) ----------------
+# ---------------- FRAME PROCESSING (elbow-angle based, confirmed & debounced) ----------------
 UP_THRESHOLD = 145
 DOWN_THRESHOLD = 105
 CONFIRM_FRAMES = 1
 COOLDOWN = 0.3
-PROCESS_WIDTH = 480   # resized width for inference (speed boost on limited cloud CPU)
-PROCESS_HEIGHT = 270
 
 def process_frame(frame, counter, stage, last_count_time, up_frames, down_frames):
-    # Resize down before running YOLO — big speed boost on low-power servers
-    small_frame = cv2.resize(frame, (PROCESS_WIDTH, PROCESS_HEIGHT))
-    results = model(small_frame, verbose=False)
+    results = model(frame, verbose=False)
     annotated_frame = results[0].plot()
     angle = None
 
@@ -240,19 +236,19 @@ def process_frame(frame, counter, stage, last_count_time, up_frames, down_frames
             else:
                 pass
 
-            cv2.putText(annotated_frame, f'ANGLE: {int(angle)}', (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-            cv2.putText(annotated_frame, f'STAGE: {stage.upper() if stage else "READY"}', (20, 65),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 229, 0), 2)
+            cv2.putText(annotated_frame, f'ANGLE: {int(angle)}', (20, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 255), 3)
+            cv2.putText(annotated_frame, f'STAGE: {stage.upper() if stage else "READY"}', (20, 150),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.3, (255, 229, 0), 3)
         else:
-            cv2.putText(annotated_frame, 'ARM NOT DETECTED', (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            cv2.putText(annotated_frame, 'ARM NOT DETECTED', (20, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
     except Exception:
         pass
 
-    cv2.putText(annotated_frame, f'REPS: {counter}', (20, 20),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 100), 2)
+    cv2.putText(annotated_frame, f'REPS: {counter}', (20, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 100), 3)
 
     return annotated_frame, counter, stage, angle, last_count_time, up_frames, down_frames
 
@@ -267,20 +263,10 @@ class PushupProcessor(VideoProcessorBase):
         self.down_frames = 0
         self.angle = None
         self.synced_count = 0
-        self.frame_skip_counter = 0
         self.lock = threading.Lock()
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
-
-        # Process every 2nd frame only — extra speed boost, count logic still reliable
-        self.frame_skip_counter += 1
-        if self.frame_skip_counter % 2 != 0:
-            # still return a resized frame so the video stream stays smooth
-            small = cv2.resize(img, (PROCESS_WIDTH, PROCESS_HEIGHT))
-            cv2.putText(small, f'REPS: {self.counter}', (20, 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 100), 2)
-            return av.VideoFrame.from_ndarray(small, format="bgr24")
 
         annotated, counter, stage, angle, last_count_time, up_frames, down_frames = process_frame(
             img, self.counter, self.stage, self.last_count_time, self.up_frames, self.down_frames
@@ -417,12 +403,14 @@ elif mode == "📁 Upload Video":
 
         if st.button("⚔️ START QUEST ANALYSIS"):
             cap = cv2.VideoCapture(video_path)
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             fps = cap.get(cv2.CAP_PROP_FPS) or 25
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
             out_path = os.path.join(tempfile.gettempdir(), "output_pushup.mp4")
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(out_path, fourcc, fps, (PROCESS_WIDTH, PROCESS_HEIGHT))
+            out = cv2.VideoWriter(out_path, fourcc, fps, (width, height))
 
             counter, stage = 0, None
             last_count_time = 0
@@ -484,7 +472,7 @@ elif mode == "🎥 Live Hunter Mode":
         key="pushup-detection",
         video_processor_factory=PushupProcessor,
         rtc_configuration=RTC_CONFIGURATION,
-        media_stream_constraints={"video": {"width": 640, "height": 480}, "audio": False},
+        media_stream_constraints={"video": True, "audio": False},
         async_processing=True,
     )
 
