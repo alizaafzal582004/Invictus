@@ -5,6 +5,7 @@ import tempfile
 import os
 import time
 import threading
+import av
 from ultralytics import YOLO
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
 from progress_manager import get_today_progress, add_pushups, get_rank_title, QUOTE
@@ -180,6 +181,22 @@ def get_angle_if_confident(kpts, confs, a_idx, b_idx, c_idx, min_conf=0.4):
         return None
     return calculate_angle(kpts[a_idx], kpts[b_idx], kpts[c_idx])
 
+# ---------------- RANK SYSTEM ----------------
+def get_rank(count):
+    if count >= 50:
+        return "S", "#FFD700"
+    elif count >= 30:
+        return "A", "#FF3B3B"
+    elif count >= 20:
+        return "B", "#7B2FFF"
+    elif count >= 10:
+        return "C", "#4361FF"
+    elif count >= 5:
+        return "D", "#00E5FF"
+    else:
+        return "E", "#8A8FB9"
+
+# ---------------- FRAME PROCESSING (elbow-angle based, confirmed & debounced) ----------------
 UP_THRESHOLD = 145
 DOWN_THRESHOLD = 105
 CONFIRM_FRAMES = 1
@@ -267,12 +284,25 @@ class PushupProcessor(VideoProcessorBase):
                 add_pushups(self.counter - self.synced_count)
                 self.synced_count = self.counter
 
-        import av
         return av.VideoFrame.from_ndarray(annotated, format="bgr24")
 
 
 RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    {
+        "iceServers": [
+            {"urls": ["stun:stun.l.google.com:19302"]},
+            {
+                "urls": ["turn:openrelay.metered.ca:80"],
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
+            {
+                "urls": ["turn:openrelay.metered.ca:443"],
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
+        ]
+    }
 )
 
 # ---------------- SIDEBAR ----------------
