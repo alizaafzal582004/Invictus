@@ -1,0 +1,13 @@
+{
+  "target": 5,
+  "week_day_count": 1,
+  "week_completed_days": 1,
+  "flame": 1,
+  "shadows": 1,
+  "today_date": "2026-07-18",
+  "today_count": 14,
+  "total_pushups": 25,
+  "history": {
+    "2026-07-17": true
+  }
+}
