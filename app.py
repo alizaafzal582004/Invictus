@@ -287,19 +287,32 @@ class PushupProcessor(VideoProcessorBase):
         return av.VideoFrame.from_ndarray(annotated, format="bgr24")
 
 
-# TURN-over-TCP forced (Streamlit Cloud blocks outbound UDP, so STUN/UDP TURN gets stuck)
+# Dedicated Metered.ca TURN server (own credentials — not shared/overloaded)
 RTC_CONFIGURATION = RTCConfiguration(
     {
         "iceServers": [
             {
-                "urls": ["turn:openrelay.metered.ca:443?transport=tcp"],
-                "username": "openrelayproject",
-                "credential": "openrelayproject",
+                "urls": "stun:stun.relay.metered.ca:80",
             },
             {
-                "urls": ["turns:openrelay.metered.ca:443?transport=tcp"],
-                "username": "openrelayproject",
-                "credential": "openrelayproject",
+                "urls": "turn:global.relay.metered.ca:80",
+                "username": "6b6396bc254404927aedaa5a",
+                "credential": "IQMuOBUn4+TIHyK/",
+            },
+            {
+                "urls": "turn:global.relay.metered.ca:80?transport=tcp",
+                "username": "6b6396bc254404927aedaa5a",
+                "credential": "IQMuOBUn4+TIHyK/",
+            },
+            {
+                "urls": "turn:global.relay.metered.ca:443",
+                "username": "6b6396bc254404927aedaa5a",
+                "credential": "IQMuOBUn4+TIHyK/",
+            },
+            {
+                "urls": "turns:global.relay.metered.ca:443?transport=tcp",
+                "username": "6b6396bc254404927aedaa5a",
+                "credential": "IQMuOBUn4+TIHyK/",
             },
         ],
         "iceTransportPolicy": "relay",
@@ -453,7 +466,7 @@ elif mode == "📁 Upload Video":
 
 # ================= MODE 2: LIVE WEBCAM (browser-based, works online) =================
 elif mode == "🎥 Live Hunter Mode":
-    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Apne browser ka camera allow karo. Reps automatically Daily Quest mein add hongi. (Connection thoda time le sakta hai — TURN relay use ho raha hai.)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="system-box"><div class="system-title">🎥 LIVE HUNTER TRACKING</div>Apne browser ka camera allow karo. Reps automatically Daily Quest mein add hongi.</div>', unsafe_allow_html=True)
 
     ctx = webrtc_streamer(
         key="pushup-detection",
