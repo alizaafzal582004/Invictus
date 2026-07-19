@@ -45,7 +45,7 @@ It's not just a rep counter — it's a **discipline engine**, built end-to-end w
 
 ---
 
-## 👩‍💻What This Project Demonstrates
+## What This Project Demonstrates
 
 This project was built solo, from a rough idea to a live, publicly deployed product — the same arc as taking a feature from concept to production in a real engineering team.
 
@@ -55,22 +55,22 @@ This project was built solo, from a rough idea to a live, publicly deployed prod
 
 ---
 
-## ✨ Features
+## Features
 
 | | |
 |---|---|
-| 🎥 **Live Hunter Mode** | Real-time push-up detection using your browser camera (powered by WebRTC) |
-| 📁 **Upload Video** | Upload a recorded push-up video and get an automatic rep count with an annotated output video |
-| 🏠 **Daily Quest Dashboard** | Track today's push-up target, progress bar, and completion status at a glance |
-| 🔥 **Flame Streak** | A daily streak counter that grows only through consistency — no shortcuts |
-| 👥 **Shadow Army** | Earn a shadow for every day you hit your target, lose one the day you don't |
-| 📅 **Weekly Progression** | Complete 7/7 days in a week and your daily target levels up by +5 reps |
-| 🎖️ **Hunter Rank System** | Climb from E-Rank to S-Rank Hunter as your Flame Streak grows |
-| 💾 **Persistent Progress** | Your progress is saved automatically and picked up the moment you return — even if you skip days |
+| **Live Hunter Mode** | Real-time push-up detection using your browser camera (powered by WebRTC) |
+| **Upload Video** | Upload a recorded push-up video and get an automatic rep count with an annotated output video |
+| **Daily Quest Dashboard** | Track today's push-up target, progress bar, and completion status at a glance |
+| **Flame Streak** | A daily streak counter that grows only through consistency — no shortcuts |
+| **Shadow Army** | Earn a shadow for every day you hit your target, lose one the day you don't |
+| **Weekly Progression** | Complete 7/7 days in a week and your daily target levels up by +5 reps |
+| **Hunter Rank System** | Climb from E-Rank to S-Rank Hunter as your Flame Streak grows |
+| **Persistent Progress** | Your progress is saved automatically and picked up the moment you return — even if you skip days |
 
 ---
 
-## 💡 Why This Project Stands Out
+## Why This Project Stands Out
 
 This isn't a tutorial clone — every layer was built and debugged from scratch:
 
@@ -81,7 +81,7 @@ This isn't a tutorial clone — every layer was built and debugged from scratch:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component            | Technology                          |
 |-----------------------|--------------------------------------|
@@ -93,7 +93,7 @@ This isn't a tutorial clone — every layer was built and debugged from scratch:
 
 ---
 
-## 🚀 Getting Started (Run Locally)
+## Getting Started (Run Locally)
 
 ### 1. Clone the repository
 ```bash
@@ -131,7 +131,7 @@ The app will open automatically in your browser at `http://localhost:8501`.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 Invictus/
@@ -146,7 +146,7 @@ Invictus/
 
 ---
 
-## ⚠️ Notes
+## Notes
 
 - For best detection accuracy, position yourself **side-on** to the camera with your full arm (shoulder to wrist) visible in frame.
 - Live camera mode requires camera permission in your browser.
@@ -154,7 +154,7 @@ Invictus/
 
 ---
 
-## 🚀 Try the Live Demo
+## Try the Live Demo
 
 Experience the AI-powered push-up tracking system in your browser.
 
